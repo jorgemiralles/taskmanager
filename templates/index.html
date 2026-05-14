@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,15 +17,33 @@
     .overdue { color: #dc3545; font-weight: 600; }
     .task-title-edit { border: none; background: transparent; width: 100%; }
     .task-title-edit:focus { outline: none; background: #f8f9fa; border-radius: 4px; padding: 2px 6px; }
+    [data-bs-theme="dark"] body { background: #1a1d21; }
+    [data-bs-theme="dark"] .task-card:hover { box-shadow: 0 .125rem .5rem rgba(255,255,255,.08); }
+    [data-bs-theme="dark"] .overdue { color: #f06070; }
+    [data-bs-theme="dark"] .task-title-edit:focus { background: #2d3238; }
   </style>
+  <script>
+    (function() {
+      var theme = localStorage.getItem('theme');
+      if (!theme) {
+        theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.dataset.bsTheme = theme;
+    })();
+  </script>
 </head>
 <body>
   <div class="container py-5" style="max-width: 720px;">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1 class="h3 mb-0"><i class="bi bi-check2-square me-2"></i>Tasks</h1>
-      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
-        <i class="bi bi-plus-lg"></i> Add Task
-      </button>
+      <div>
+        <button class="btn btn-sm btn-outline-secondary" id="themeToggle" title="Toggle theme">
+          <i class="bi bi-sun-fill"></i>
+        </button>
+        <button class="btn btn-primary btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#addModal">
+          <i class="bi bi-plus-lg"></i> Add Task
+        </button>
+      </div>
     </div>
 
     <div id="taskList" class="d-flex flex-column gap-2"></div>
@@ -184,6 +202,23 @@
     });
 
     loadTasks();
+
+    var themeToggle = document.getElementById('themeToggle');
+    var themeIcon = themeToggle.querySelector('i');
+
+    function setThemeIcon(theme) {
+      themeIcon.className = theme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+    }
+
+    setThemeIcon(document.documentElement.dataset.bsTheme);
+
+    themeToggle.addEventListener('click', function() {
+      var current = document.documentElement.dataset.bsTheme;
+      var next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.bsTheme = next;
+      localStorage.setItem('theme', next);
+      setThemeIcon(next);
+    });
   </script>
 </body>
 </html>
