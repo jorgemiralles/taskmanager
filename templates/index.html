@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background: #f5f7fa; }
+    .task-card { transition: box-shadow .15s; }
+    .task-card:hover { box-shadow: 0 .125rem .5rem rgba(0,0,0,.08); }
+    .completed .task-title { text-decoration: line-through; color: #adb5bd; }
+    .priority-high { border-left: 4px solid #dc3545; }
+    .priority-medium { border-left: 4px solid #ffc107; }
+    .priority-low { border-left: 4px solid #198754; }
+    .overdue { color: #dc3545; font-weight: 600; }
+    .task-title-edit { border: none; background: transparent; width: 100%; }
+    .task-title-edit:focus { outline: none; background: #f8f9fa; border-radius: 4px; padding: 2px 6px; }
+  </style>
+</head>
+<body>
+  <div class="container py-5" style="max-width: 720px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3 mb-0"><i class="bi bi-check2-square me-2"></i>Tasks</h1>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
+        <i class="bi bi-plus-lg"></i> Add Task
+      </button>
+    </div>
+
+    <div id="taskList" class="d-flex flex-column gap-2"></div>
+
+    <div id="emptyState" class="text-center py-5 text-muted d-none">
+      <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+      <span>No tasks yet</span>
+    </div>
+  </div>
+
+  <div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title">New Task</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addForm">
+            <div class="mb-3">
+              <label class="form-label small">Title</label>
+              <input type="text" class="form-control" id="addTitle" required autofocus>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col">
+                <label class="form-label small">Priority</label>
+                <select class="form-select" id="addPriority">
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div class="col">
+                <label class="form-label small">Due date</label>
+                <input type="date" class="form-control" id="addDueDate">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Add</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const taskList = document.getElementById('taskList');
+    const emptyState = document.getElementById('emptyState');
+    const addModal = new bootstrap.Modal(document.getElementById('addModal'));
+    const addForm = document.getElementById('addForm');
+
+    async function fetchTasks() {
+      const res = await fetch('/api/tasks');
+      return res.json();
+    }
+
+    async function createTask(data) {
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      return res.json();
+    }
+
+    async function updateTask(id, data) {
+      await fetch('/api/tasks/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+    }
+
+    async function toggleTask(id) {
+      await fetch('/api/tasks/' + id + '/toggle', { method: 'PATCH' });
+    }
+
+    async function deleteTask(id) {
+      await fetch('/api/tasks/' + id, { method: 'DELETE' });
+    }
+
+    function escapeHtml(text) {
+      const d = document.createElement('div');
+      d.textContent = text;
+      return d.innerHTML;
+    }
+
+    function renderTasks(tasks) {
+      taskList.innerHTML = '';
+      emptyState.classList.toggle('d-none', tasks.length > 0);
+
+      for (const t of tasks) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = t.due_date ? new Date(t.due_date + 'T00:00:00') : null;
+        const isOverdue = due && !t.completed && due < today;
+        const dueStr = due ? due.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+
+        const div = document.createElement('div');
+        div.className = 'card task-card border-0 shadow-sm priority-' + t.priority + (t.completed ? ' completed' : '');
+        div.innerHTML =
+          '<div class="card-body py-3 px-3">' +
+            '<div class="d-flex align-items-center gap-3">' +
+              '<input type="checkbox" class="form-check-input mt-0 task-check" ' + (t.completed ? 'checked' : '') + ' data-id="' + t.id + '">' +
+              '<div class="flex-grow-1 min-width-0">' +
+                '<input type="text" class="task-title-edit form-control-sm" value="' + escapeHtml(t.title) + '" data-id="' + t.id + '" data-priority="' + t.priority + '" data-due="' + (t.due_date || '') + '">' +
+                '<div class="d-flex gap-2 mt-1 small">' +
+                  '<span class="badge bg-' + (t.priority === 'high' ? 'danger' : t.priority === 'medium' ? 'warning text-dark' : 'success') + '">' + t.priority + '</span>' +
+                  (dueStr ? '<span class="text-muted"><i class="bi bi-calendar3 me-1"></i>' + dueStr + '</span>' : '') +
+                  (isOverdue ? '<span class="overdue"><i class="bi bi-exclamation-triangle me-1"></i>Overdue</span>' : '') +
+                '</div>' +
+              '</div>' +
+              '<button class="btn btn-sm btn-outline-danger border-0 delete-btn" data-id="' + t.id + '"><i class="bi bi-trash3"></i></button>' +
+            '</div>' +
+          '</div>';
+        taskList.appendChild(div);
+      }
+
+      document.querySelectorAll('.task-check').forEach(cb => {
+        cb.addEventListener('change', async () => {
+          await toggleTask(cb.dataset.id);
+        });
+      });
+
+      document.querySelectorAll('.task-title-edit').forEach(input => {
+        input.addEventListener('change', async () => {
+          await updateTask(input.dataset.id, { title: input.value, priority: input.dataset.priority, due_date: input.dataset.due || null });
+        });
+      });
+
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await deleteTask(btn.dataset.id);
+          loadTasks();
+        });
+      });
+    }
+
+    async function loadTasks() {
+      const tasks = await fetchTasks();
+      renderTasks(tasks);
+    }
+
+    addForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('addTitle').value.trim();
+      if (!title) return;
+      await createTask({
+        title,
+        priority: document.getElementById('addPriority').value,
+        due_date: document.getElementById('addDueDate').value || null
+      });
+      addForm.reset();
+      addModal.hide();
+      loadTasks();
+    });
+
+    loadTasks();
+  </script>
+</body>
+</html>
