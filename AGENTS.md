@@ -57,9 +57,17 @@ python app.py          # http://0.0.0.0:5000
 - snake_case for functions and variables.
 - No linter/formatter config enforced — match existing style.
 
+## Testing
+
+- Integration tests in `tests/` — run with `pytest` from project root (requires MySQL accessible at `$DB_HOST`).
+- Terminal: `source venv/bin/activate && pytest tests/ -v`
+- Uses isolated `taskmanager_test` database (created session-scoped, dropped after run).
+- `conftest.py` loads `.env`, overrides `DB_NAME` to `taskmanager_test`, provides Flask test client fixture.
+- Each test gets a clean `tasks` table (auto `TRUNCATE` via `autouse` fixture).
+- 8 tests covering all 5 endpoints + create/toggle/update/delete cycle.
+
 ## Key facts
 
-- Integration tests in `tests/` — run with `pytest` from project root (requires MySQL). Uses isolated `taskmanager_test` DB.
 - No linter/formatter/typecheck config. Nothing else to run before commit.
 - DB credentials are hardcoded in `.env` — never commit `.env`.
 - venv uses Python 3.12 with `flask` and `mysql-connector-python`.
