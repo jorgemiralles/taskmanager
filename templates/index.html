@@ -86,13 +86,14 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const theme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-bs-theme', theme);
     const themeIcon = document.querySelector('#themeToggle i');
-    if (theme === 'dark') themeIcon.className = 'bi bi-emoji-frown';
+    if (document.documentElement.getAttribute('data-bs-theme') === 'dark') {
+      themeIcon.className = 'bi bi-emoji-frown';
+    }
 
     document.getElementById('themeToggle').addEventListener('click', () => {
-      const next = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+      const current = document.documentElement.getAttribute('data-bs-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-bs-theme', next);
       localStorage.setItem('theme', next);
       themeIcon.className = next === 'dark' ? 'bi bi-emoji-frown' : 'bi bi-emoji-smile';
@@ -210,23 +211,6 @@
     });
 
     loadTasks();
-
-    var themeToggle = document.getElementById('themeToggle');
-    var themeIcon = themeToggle.querySelector('i');
-
-    function setThemeIcon(theme) {
-      themeIcon.className = theme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
-    }
-
-    setThemeIcon(document.documentElement.dataset.bsTheme);
-
-    themeToggle.addEventListener('click', function() {
-      var current = document.documentElement.dataset.bsTheme;
-      var next = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.dataset.bsTheme = next;
-      localStorage.setItem('theme', next);
-      setThemeIcon(next);
-    });
   </script>
 </body>
 </html>
