@@ -10,7 +10,9 @@ Created by OpenCode (big-pickle model). Language: Python / JavaScript / SQL.
 # Install mysql client if needed (Alpine: apk add mariadb-client)
 source venv/bin/activate
 mysql -h "$DB_HOST" -u root -proot --ssl=0 < schema.sql
-python app.py          # http://0.0.0.0:5000
+python app.py          # http://0.0.0.0:5000, Ctrl+C to stop
+# Or run in background: nohup python app.py > /tmp/flask.log 2>&1 &
+# Stop background: fuser -k 5000/tcp
 ```
 
 ## Architecture
@@ -46,7 +48,7 @@ python app.py          # http://0.0.0.0:5000
 - Use `mysql.connector` directly — no ORM. Raw SQL with `%s` placeholders.
 - DB connection via `get_db()` helper in `app.py` — returns a new connection each call.
 - Flask app uses `@app.route()` decorators, global `app` object, `jsonify` for API responses.
-- `.env` is NOT auto-loaded (no `python-dotenv` installed). Export vars or source `.env` before running.
+- `.env` is auto-loaded via `python-dotenv` (`load_dotenv()` at module level in `app.py`).
 - All API routes return JSON — no server-side templates except the root `/` serving `index.html`.
 
 ## Coding style
@@ -70,5 +72,5 @@ python app.py          # http://0.0.0.0:5000
 
 - No linter/formatter/typecheck config. Nothing else to run before commit.
 - DB credentials are hardcoded in `.env` — never commit `.env`.
-- venv uses Python 3.12 with `flask` and `mysql-connector-python`.
+- venv uses Python 3.12 with `flask`, `mysql-connector-python`, and `python-dotenv`.
 - MySQL host `mimysql` suggests a Docker/container network — verify connectivity if running elsewhere.

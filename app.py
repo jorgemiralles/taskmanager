@@ -3,6 +3,9 @@ from flask import Flask, jsonify, request, render_template
 import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
