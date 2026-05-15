@@ -67,6 +67,10 @@ python app.py          # http://0.0.0.0:5000, Ctrl+C to stop
 - `conftest.py` loads `.env`, overrides `DB_NAME` to `taskmanager_test`, provides Flask test client fixture.
 - Each test gets a clean `tasks` table (auto `TRUNCATE` via `autouse` fixture).
 - 8 tests covering all 5 endpoints + create/toggle/update/delete cycle.
+- **BDD acceptance tests** in `features/` — run with `behave` from project root.
+  - Terminal: `source venv/bin/activate && behave`
+  - Same `taskmanager_test` DB lifecycle (created/dropped by `features/environment.py`).
+  - 8 Gherkin scenarios covering all 5 CRUD endpoints.
 
 ## Key facts
 
